@@ -1,30 +1,43 @@
 trigger:
-- main
+  branches:
+    include:
+      - main  # Run pipeline when code is pushed to main
+
+variables:
+  imageName: 'nodejs-app'
+  tag: 'latest'
+  acrLoginServer: 'myappregistry15.azurecr.io'  # Replace with your ACR login server
+  azureSubscription: 'azure-pipeline-connection'   # Service connection name in Azure DevOps
+  appServiceName: 'nodejs15'                       # Replace with your App Service name
+  resourceGroupName: 'demo1'          # Replace with your Resource Group name
 
 pool:
   vmImage: 'ubuntu-latest'
 
-variables:
-  dockerRegistryServiceConnection: '<your-service-connection-name>'
-  imageRepository: 'nodejs-app'
-  containerRegistry: '<your-registry-name>.azurecr.io'
-  dockerfilePath: 'Dockerfile'
-  tag: '$(Build.BuildId)'
-
 steps:
-- task: Docker@2
-  displayName: Build and Push Docker image
-  inputs:
-    containerRegistry: $(dockerRegistryServiceConnection)
-    repository: $(imageRepository)
-    command: 'buildAndPush'
-    Dockerfile: $(dockerfilePath)
-    tags: |
-      $(tag)
 
-- task: AzureWebAppContainer@1
-  displayName: Deploy to Azure Web App
+- task: AzureCLI@2
   inputs:
-    azureSubscription: '<your-azure-service-connection>'
-    appName: '<your-app-service-name>'
-    containers: '$(containerRegistry)/$(imageRepository):$(tag)'
+    azureSubscription: $(azureSubscription)
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      echo "Logging in to ACR..."
+      az acr login --name $(acrLoginServer)
+
+      echo "Building Docker image..."
+      docker build -t $(acrLoginServer)/$(imageName):$(tag) .
+
+      echo "Pushing image to ACR..."
+      docker push $(acrLoginServer)/$(imageName):$(tag)
+
+      echo "Updating App Service to use new image..."
+      az webapp config container set \
+        --name $(appServiceName) \
+        --resource-group $(resourceGroupName) \
+        --docker-custom-image-name $(acrLoginServer)/$(imageName):$(tag) \
+        --docker-registry-server-url https://$(acrLoginServer)
+
+      echo "Restarting App Service..."
+      az webapp restart --name $(appServiceName) --resource-group $(resourceGroupName)
+  displayName: 'Build and Deploy Docker Image to Azure Web App'
