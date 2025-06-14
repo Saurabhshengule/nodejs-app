@@ -1,4 +1,4 @@
-#js
+#index.js
 
 const http = require('http');
 
@@ -15,7 +15,7 @@ server.listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}/`);
 });
 
-#json
+#package.json
 
 {
   "name": "azure-devops-sample-app",
