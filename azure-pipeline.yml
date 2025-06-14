@@ -1,0 +1,30 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  dockerRegistryServiceConnection: '<your-service-connection-name>'
+  imageRepository: 'nodejs-app'
+  containerRegistry: '<your-registry-name>.azurecr.io'
+  dockerfilePath: 'Dockerfile'
+  tag: '$(Build.BuildId)'
+
+steps:
+- task: Docker@2
+  displayName: Build and Push Docker image
+  inputs:
+    containerRegistry: $(dockerRegistryServiceConnection)
+    repository: $(imageRepository)
+    command: 'buildAndPush'
+    Dockerfile: $(dockerfilePath)
+    tags: |
+      $(tag)
+
+- task: AzureWebAppContainer@1
+  displayName: Deploy to Azure Web App
+  inputs:
+    azureSubscription: '<your-azure-service-connection>'
+    appName: '<your-app-service-name>'
+    containers: '$(containerRegistry)/$(imageRepository):$(tag)'
