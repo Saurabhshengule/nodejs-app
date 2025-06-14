@@ -1,4 +1,4 @@
-js
+#js
 
 const http = require('http');
 
@@ -15,7 +15,7 @@ server.listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}/`);
 });
 
-json
+#json
 
 {
   "name": "azure-devops-sample-app",
@@ -31,28 +31,15 @@ json
   }
 }
 
-yaml
+#dockerfile
+FROM node:18
 
-trigger:
-- main
+WORKDIR /app
 
-pool:
-  vmImage: 'ubuntu-latest'
+COPY package*.json ./
+RUN npm install
 
-steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: '18.x'
-  displayName: 'Install Node.js'
+COPY . .
 
-- script: |
-    npm install
-    npm start &
-    sleep 5
-    curl http://localhost:3000
-  displayName: 'Run Application & Test'
-
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(System.DefaultWorkingDirectory)'
-    ArtifactName: 'drop'
+EXPOSE 3000
+CMD ["npm", "start"]
