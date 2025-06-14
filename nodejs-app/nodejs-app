@@ -1,0 +1,59 @@
+ File 1: app.js
+js
+
+const http = require('http');
+
+const hostname = '0.0.0.0';
+const port = process.env.PORT || 3000;
+
+const server = http.createServer((req, res) => {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'text/plain');
+  res.end('Hello from Azure DevOps pipeline deployment!\n');
+});
+
+server.listen(port, hostname, () => {
+  console.log(`Server running at http://${hostname}:${port}/`);
+});
+📁 File 2: package.json
+json
+
+{
+  "name": "azure-devops-sample-app",
+  "version": "1.0.0",
+  "description": "Simple Node.js app for Azure DevOps CI/CD",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
+📁 File 3: azure-pipelines.yml
+yaml
+
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '18.x'
+  displayName: 'Install Node.js'
+
+- script: |
+    npm install
+    npm start &
+    sleep 5
+    curl http://localhost:3000
+  displayName: 'Run Application & Test'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(System.DefaultWorkingDirectory)'
+    ArtifactName: 'drop'
