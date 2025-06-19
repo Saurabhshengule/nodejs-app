@@ -1,0 +1,27 @@
+trigger:
+- main
+
+resources:
+- repo: self
+
+variables:
+  dockerRegistryServiceConnection: 'd1beacf1-20cd-484d-96fd-3bbb289a40f2'
+  imageRepository: 'saurabhshengulenodejsapp'
+  containerRegistry: 'myappregistry15.azurecr.io'
+  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+  tag: '$(Build.BuildId)'
+
+stages:
+- stage: Build
+  displayName: Build and push stage
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      name: azagent1  # 👈 Your self-hosted agent pool name
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: build
+
