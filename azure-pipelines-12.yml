@@ -1,0 +1,41 @@
+# Azure DevOps Pipeline - Build & Push Docker Image to ACR using Self-Hosted Agent
+
+trigger:
+- main
+
+resources:
+- repo: self
+
+variables:
+  dockerRegistryServiceConnection: 'e78929eb-c70a-4b5e-8a10-9f90dd0dcc0f'
+  imageRepository: 'saurabhshengulenodejsapp'
+  containerRegistry: 'myappregistry15.azurecr.io'
+  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+  tag: '$(Build.BuildId)'
+
+stages:
+- stage: Build
+  displayName: Build and push stage
+  jobs:
+  - job: Build
+    displayName: Build Docker image
+    pool:
+      name: Default  # Self-hosted agent pool
+    steps:
+
+    - script: |
+        echo "🔍 Checking Dockerfile and other files in build directory:"
+        echo "📁 Path: $(Build.SourcesDirectory)"
+        dir "$(Build.SourcesDirectory)"
+      displayName: '📂 Check Dockerfile and source files'
+
+    - task: Docker@2
+      displayName: 🐳 Build and Push Docker Image to ACR
+      inputs:
+        command: buildAndPush
+        containerRegistry: $(dockerRegistryServiceConnection)
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        tags: |
+          $(tag)
+
